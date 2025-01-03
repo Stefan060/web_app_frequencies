@@ -164,9 +164,9 @@
 
         <!-- Timer Slider -->
         <div class="slider-container">
-            <input type="range" id="timerSlider" min="1" max="60" value="10" step="1" onchange="updateDurationDisplay()" oninput="updateDurationDisplay()" onmousedown="showDurationDisplay()" onmouseup="hideDurationDisplay()">
+            <input type="range" id="timerSlider" min="0" max="60" value="0" step="1" onchange="updateDurationDisplay()" oninput="updateDurationDisplay()" onmousedown="showDurationDisplay()" onmouseup="hideDurationDisplay()">
             <div class="countdown-display">
-                <p id="countdown"></p>
+                <p id="countdown">OFF</p>
             </div>
         </div>
     </div>
@@ -194,7 +194,7 @@
         let audio = new Audio();
         let isPlaying = false;
         let timer = null;
-        let timerDuration = 10 * 60 * 1000; // Default 10 minutes in milliseconds
+        let timerDuration = 0; // Default to OFF
         let remainingTime = timerDuration; // Initial remaining time
 
         function loadAudioButtons() {
@@ -233,13 +233,26 @@
         let lastSelectedButton = null;
 
         function togglePlayPause() {
-            if (isPlaying) {
-                audio.pause();
-                clearInterval(timer);
+            // Überprüfe, ob der Timer auf "OFF" ist. Falls ja, keine Timer-Logik anwenden.
+            if (timerDuration > 0) {
+                // Wenn ein Timer gesetzt ist
+                if (isPlaying) {
+                    audio.pause();
+                    clearInterval(timer);
+                } else {
+                    audio.play();
+                    setTimer();  // Timer starten
+                }
             } else {
-                audio.play();
-                setTimer();
+                // Wenn der Timer auf "OFF" ist, Audio einfach starten oder stoppen
+                if (isPlaying) {
+                    audio.pause();
+                } else {
+                    audio.play();
+                }
             }
+
+            // Wiedergabestatus umschalten
             isPlaying = !isPlaying;
             updatePlayPauseButton();
         }
@@ -274,24 +287,38 @@
         function updateDurationDisplay() {
             const slider = document.getElementById('timerSlider');
             const minutes = slider.value;
-            timerDuration = minutes * 60 * 1000; // Convert to milliseconds
-            remainingTime = timerDuration; // Reset remaining time to the new duration
+            const countdownDisplay = document.getElementById('countdown');
 
-            if (!isPlaying) {
-                updateCountdownDisplay(); // Update countdown display immediately when slider is adjusted
+            if (minutes === "0") {
+                countdownDisplay.textContent = "OFF";
+                timerDuration = 0;
+                remainingTime = timerDuration;
+            } else {
+                timerDuration = minutes * 60 * 1000; // Convert to milliseconds
+                remainingTime = timerDuration; // Reset remaining time to the new duration
+
+                if (!isPlaying) {
+                    updateCountdownDisplay(); // Update countdown display immediately when slider is adjusted
+                }
             }
         }
 
         function updateCountdownDisplay() {
+            const countdownDisplay = document.getElementById('countdown');
+            if (timerDuration === 0) {
+                countdownDisplay.textContent = "OFF";
+                return;
+            }
+
             const minutes = Math.floor(remainingTime / 60000);
             const seconds = Math.floor((remainingTime % 60000) / 1000);
-            document.getElementById('countdown').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            countdownDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
         }
 
         function resetTimer() {
             const slider = document.getElementById('timerSlider');
-            slider.value = 10; // Reset slider to default (10 minutes)
-            timerDuration = 10 * 60 * 1000; // Reset to 10 minutes
+            slider.value = 0; // Reset slider to OFF
+            timerDuration = 0; // Reset to OFF
             remainingTime = timerDuration; // Reset remaining time
             updateCountdownDisplay(); // Update the displayed countdown
         }
